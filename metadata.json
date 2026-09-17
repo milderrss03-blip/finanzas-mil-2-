@@ -1,5 +1,6 @@
 {
   "name": "Finanzas Mil pro",
   "description": "Aplicación fintech profesional para la gestión de ingresos, gastos y metas financieras con almacenamiento en la nube.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

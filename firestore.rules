@@ -56,6 +56,25 @@ service cloud.firestore {
     //   - expenses: list (required, objects with name and amount)
     //   - userId: string (required)
     //
+    // Collection: recurringPayments
+    // Document ID: paymentId
+    // Fields:
+    //   - name: string (required)
+    //   - amount: number (required, positive)
+    //   - dueDate: string (required, ISO 8601)
+    //   - frequency: string (required, enum: monthly, weekly)
+    //   - categoryId: string (required)
+    //   - userId: string (required)
+    //   - isPaid: boolean (required)
+    //
+    // Collection: quickActions
+    // Document ID: actionId
+    // Fields:
+    //   - label: string (required)
+    //   - amount: number (required, positive)
+    //   - icon: string (required)
+    //   - userId: string (required)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -146,49 +165,68 @@ service cloud.firestore {
              data.userId == request.auth.uid;
     }
 
+    function isValidRecurringPayment(data) {
+      return data.keys().hasAll(['name', 'amount', 'dueDate', 'frequency', 'categoryId', 'userId', 'isPaid']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.amount is number && data.amount > 0 &&
+             isValidDateString(data.dueDate) &&
+             data.frequency in ['monthly', 'weekly'] &&
+             data.categoryId is string &&
+             data.userId == request.auth.uid &&
+             data.isPaid is bool;
+    }
+
+    function isValidQuickAction(data) {
+      return data.keys().hasAll(['label', 'amount', 'icon', 'userId']) &&
+             data.label is string && data.label.size() > 0 && data.label.size() < 100 &&
+             data.amount is number && data.amount > 0 &&
+             data.icon is string &&
+             data.userId == request.auth.uid;
+    }
+
     // ===============================================================
-    // Rules
+    // Rules (MODIFIED FOR MANUAL AUTH - PUBLIC ACCESS)
+    // WARNING: These rules are permissive because Firebase Auth is bypassed.
     // ===============================================================
 
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    match /manual_users/{userId} {
+      allow read, write: if true;
+    }
+
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow read, write: if true;
     }
 
     match /accounts/{accountId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidAccount(request.resource.data);
-      allow update: if isDocOwner() && isValidAccount(request.resource.data) && uidNotModified();
-      allow delete: if isDocOwner();
+      allow read, write: if true;
     }
 
     match /categories/{categoryId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidCategory(request.resource.data);
-      allow update: if isDocOwner() && isValidCategory(request.resource.data) && uidNotModified();
-      allow delete: if isDocOwner();
+      allow read, write: if true;
     }
 
     match /movements/{movementId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidMovement(request.resource.data);
-      allow update: if isDocOwner() && isValidMovement(request.resource.data) && uidNotModified();
-      allow delete: if isDocOwner();
+      allow read, write: if true;
     }
 
     match /goals/{goalId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidGoal(request.resource.data);
-      allow update: if isDocOwner() && isValidGoal(request.resource.data) && uidNotModified();
-      allow delete: if isDocOwner();
+      allow read, write: if true;
     }
 
     match /weeklyBudgets/{budgetId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidWeeklyBudget(request.resource.data);
-      allow update: if isDocOwner() && isValidWeeklyBudget(request.resource.data) && uidNotModified();
-      allow delete: if isDocOwner();
+      allow read, write: if true;
+    }
+
+    match /recurringPayments/{paymentId} {
+      allow read, write: if true;
+    }
+
+    match /quickActions/{actionId} {
+      allow read, write: if true;
     }
   }
 }
